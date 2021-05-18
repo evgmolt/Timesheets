@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,34 +11,59 @@ using Timesheets.Models.Dto;
 
 namespace Timesheets.Data.Implementations
 {
+    /// <summary> Реализация интерфейса репозитория Person </summary>
     public class PersonsRepository : IRepository
     {
         private readonly string _jsonFileName = "persons.json";
 
-        private List<Person> persons;
+        private readonly ILogger<PersonsRepository> _logger;
+        private List<Person> _persons;
 
-        public PersonsRepository()
+        public PersonsRepository(ILogger<PersonsRepository> logger)
         {
-            if (File.Exists(_jsonFileName))
+            _logger = logger;
+            try
             {
                 var json = File.ReadAllText(_jsonFileName);
-                persons = JsonSerializer.Deserialize<List<Person>>(json);
+                _persons = JsonSerializer.Deserialize<List<Person>>(json);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                _persons = new List<Person>();
+            }        
         }
 
-        private void UpdatePersonsFile()
+        private bool UpdatePersonsFile()
         {
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true,
             };
-            var json = JsonSerializer.Serialize(persons, options);
-            File.WriteAllText(_jsonFileName, json);
+            try
+            {
+                var json = JsonSerializer.Serialize(_persons, options);
+                File.WriteAllText(_jsonFileName, json);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return false;
+            }
         }
 
         public int Create(PersonRequest personRequest)
         {
-            int maxId = persons.Max(p => p.Id);
+            int maxId;
+            try
+            {
+                maxId = _persons.Max(p => p.Id);
+            }
+            catch (InvalidOperationException)
+            {
+                maxId = 0;
+            }
             maxId++;
             var person = new Person
             {
@@ -48,39 +74,87 @@ namespace Timesheets.Data.Implementations
                 Company = personRequest.Company,
                 Age = personRequest.Age
             };
-            persons.Add(person);
-            UpdatePersonsFile();
-            return person.Id;
+            _persons.Add(person);
+            bool Ok = UpdatePersonsFile();
+            if (Ok)
+            {
+                return person.Id;
+            }
+            else
+            {
+                return 0;
+            }
         }
 
-        public void Delete(int id)
+        public bool Delete(int id)
         {
-            Person personForDelete = persons.Single(p => p.Id == id);
-            persons.Remove(personForDelete);
-            UpdatePersonsFile();
+            Person personForDelete = _persons.Single(p => p.Id == id);
+            if (_persons.Remove(personForDelete))
+            {
+                return UpdatePersonsFile();
+            }
+            else 
+            {
+                return false;
+            }
         }
 
-        public Person GetPerson(int id)
+        public Person GetPersonById(int id)
         {
-            return persons.Single(p => p.Id == id);
+            try
+            {
+                return _persons.Single(p => p.Id == id);
+            }
+            catch (InvalidOperationException)
+            {
+                return default;
+            }
         }
 
         public IEnumerable<Person> GetPersonsByName(string name)
         {
-            return persons.Where(p => p.FirstName == name || p.LastName == name);
+            try
+            {
+                return _persons.Where(p => p.FirstName == name || p.LastName == name);
+            }
+            catch (InvalidOperationException)
+            {
+                return default;
+            }
         }
 
         public IEnumerable<Person> GetPersonsWithPagination(int skip, int take)
         {
-            return persons.Where(p => p.Id > skip && p.Id < (skip + take + 1));
+            try
+            {
+                return _persons.Where(p => p.Id > skip && p.Id < (skip + take + 1));
+            }
+            catch (InvalidOperationException)
+            {
+                return default;
+            }
         }
 
-        public void Update(Person person)
+        public bool Update(Person person)
         {
-            var personForUpdate = persons.Single(p => p.Id == person.Id);
-            persons.Remove(personForUpdate);
-            persons.Add(person);
-            UpdatePersonsFile();
+            Person personForUpdate = null;
+            try
+            {
+                personForUpdate = _persons.Single(p => p.Id == person.Id);
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+            if (_persons.Remove(personForUpdate))
+            {
+                _persons.Add(person);
+            }
+            else
+            {
+                return false;
+            }
+            return UpdatePersonsFile();
         }
     }
 }

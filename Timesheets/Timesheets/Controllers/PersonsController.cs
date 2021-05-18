@@ -26,16 +26,45 @@ namespace Timesheets.Controllers
         }
 
         /// <summary>
+        /// Создает новый объект Person
+        /// </summary>
+        /// <param name="personRequest"></param>
+        /// <returns> id созданного объекта </returns>
+        [HttpPost("create")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult CreatePerson([FromBody] PersonRequest personRequest)
+        {
+            int id = _personsRepository.Create(personRequest);
+            if (id == 0)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            else
+            {
+                return Ok(id);
+            }
+        }
+
+        /// <summary>
         /// Получает данные человек по Id
         /// </summary>
         /// <param name="personId"></param>
         /// <returns> Данные человека </returns>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpGet("person/{personId}")]
-        public ActionResult GetPerson([FromRoute] int personId)
+        public ActionResult GetPersonById([FromRoute] int personId)
         {
-            _logger.LogDebug("GetPerson");
-            var response = _personsRepository.GetPerson(personId);
-            return Ok(response);
+            var response = _personsRepository.GetPersonById(personId);
+            if (response == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(response);
+            }
         }
 
         /// <summary>
@@ -43,36 +72,42 @@ namespace Timesheets.Controllers
         /// </summary>
         /// <param name="personName"></param>
         /// <returns></returns>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpGet("personName/{personName}")]
         public ActionResult GetPersonByName([FromRoute] string personName)
         {
             var response = _personsRepository.GetPersonsByName(personName);
-            return Ok(response);
+            if (response.Count() == 0)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(response);
+            }
         }
 
         /// <summary>
-        /// Получает список людей в заданном диапазоне
+        /// Получает список людей в заданном диапазоне id
         /// </summary>
         /// <param name="skip"></param>
         /// <param name="take"></param>
         /// <returns></returns>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpGet("personsWithPagination")]
         public ActionResult GetPersonWithPagination(int skip, int take)
         {
             var response = _personsRepository.GetPersonsWithPagination(skip, take);
-            return Ok(response);
-        }
-
-        /// <summary>
-        /// Создает новый объект Person
-        /// </summary>
-        /// <param name="personRequest"></param>
-        /// <returns> id созданного объекта </returns>
-        [HttpPost("create")]
-        public ActionResult CreatePerson([FromBody] PersonRequest personRequest)
-        {
-            int id = _personsRepository.Create(personRequest);
-            return Ok(id);
+            if (response.Count() == 0)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(response);
+            }
         }
 
         /// <summary>
@@ -81,10 +116,18 @@ namespace Timesheets.Controllers
         /// <param name="person"></param>
         /// <returns></returns>
         [HttpPut("update")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult UpdatePerson([FromBody] Person person)
         {
-            _personsRepository.Update(person);
-            return Ok();
+            if (_personsRepository.Update(person))
+            {
+                return Ok();
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         /// <summary>
@@ -95,8 +138,14 @@ namespace Timesheets.Controllers
         [HttpDelete("delete")]
         public ActionResult DeletePerson(int personId)
         {
-            _personsRepository.Delete(personId);
-            return Ok();
+            if (_personsRepository.Delete(personId))
+            {
+                return Ok();
+            }
+            else
+            {
+                return NotFound();
+            }
         }
     }
 }

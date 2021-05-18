@@ -7,16 +7,16 @@ using Timesheets.Models.Dto;
 
 namespace Timesheets.Data.Interfaces
 {
-    /// <summary> Интерфейс репозитория </summary>
+    /// <summary> Интерфейс репозитория Person </summary>
     public interface IRepository
     {
         public int Create(PersonRequest personRequest);
 
-        public void Update(Person person);
+        public bool Update(Person person);
 
-        public Person GetPerson(int id);
+        public Person GetPersonById(int id);
 
-        public void Delete(int id);
+        public bool Delete(int id);
 
         public IEnumerable<Person> GetPersonsByName(string name);
 
