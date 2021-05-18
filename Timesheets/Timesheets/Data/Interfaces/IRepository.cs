@@ -12,14 +12,14 @@ namespace Timesheets.Data.Interfaces
     {
         public int Create(PersonRequest personRequest);
 
-        public bool Update(Person person);
-
         public Person GetPersonById(int id);
-
-        public bool Delete(int id);
 
         public IEnumerable<Person> GetPersonsByName(string name);
 
         public IEnumerable<Person> GetPersonsWithPagination(int skip, int take);
+
+        public bool Update(Person person);
+
+        public bool Delete(int id);
     }
 }

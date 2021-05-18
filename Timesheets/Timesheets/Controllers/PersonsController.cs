@@ -36,18 +36,11 @@ namespace Timesheets.Controllers
         public ActionResult CreatePerson([FromBody] PersonRequest personRequest)
         {
             int id = _personsRepository.Create(personRequest);
-            if (id == 0)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
-            else
-            {
-                return Ok(id);
-            }
+            return id == 0 ? StatusCode(StatusCodes.Status500InternalServerError) : (ActionResult)Ok(id);
         }
 
         /// <summary>
-        /// Получает данные человек по Id
+        /// Получает данные человека по Id
         /// </summary>
         /// <param name="personId"></param>
         /// <returns> Данные человека </returns>
@@ -57,14 +50,7 @@ namespace Timesheets.Controllers
         public ActionResult GetPersonById([FromRoute] int personId)
         {
             var response = _personsRepository.GetPersonById(personId);
-            if (response == null)
-            {
-                return NotFound();
-            }
-            else
-            {
-                return Ok(response);
-            }
+            return response == null ? NotFound() : (ActionResult)Ok(response);
         }
 
         /// <summary>
@@ -78,14 +64,7 @@ namespace Timesheets.Controllers
         public ActionResult GetPersonByName([FromRoute] string personName)
         {
             var response = _personsRepository.GetPersonsByName(personName);
-            if (response.Count() == 0)
-            {
-                return NotFound();
-            }
-            else
-            {
-                return Ok(response);
-            }
+            return response.Count() == 0 ? NotFound() : (ActionResult)Ok(response);
         }
 
         /// <summary>
@@ -100,14 +79,7 @@ namespace Timesheets.Controllers
         public ActionResult GetPersonWithPagination(int skip, int take)
         {
             var response = _personsRepository.GetPersonsWithPagination(skip, take);
-            if (response.Count() == 0)
-            {
-                return NotFound();
-            }
-            else
-            {
-                return Ok(response);
-            }
+            return response.Count() == 0 ? NotFound() : (ActionResult)Ok(response);
         }
 
         /// <summary>
@@ -120,14 +92,7 @@ namespace Timesheets.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult UpdatePerson([FromBody] Person person)
         {
-            if (_personsRepository.Update(person))
-            {
-                return Ok();
-            }
-            else
-            {
-                return NotFound();
-            }
+            return _personsRepository.Update(person) ? Ok() : (ActionResult)NotFound();
         }
 
         /// <summary>
@@ -136,16 +101,11 @@ namespace Timesheets.Controllers
         /// <param name="personId"></param>
         /// <returns></returns>
         [HttpDelete("delete")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult DeletePerson(int personId)
         {
-            if (_personsRepository.Delete(personId))
-            {
-                return Ok();
-            }
-            else
-            {
-                return NotFound();
-            }
+            return _personsRepository.Delete(personId) ? Ok() : (ActionResult)NotFound();
         }
     }
 }

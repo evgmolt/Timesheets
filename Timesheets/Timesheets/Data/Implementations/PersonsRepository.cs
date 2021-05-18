@@ -75,28 +75,7 @@ namespace Timesheets.Data.Implementations
                 Age = personRequest.Age
             };
             _persons.Add(person);
-            bool Ok = UpdatePersonsFile();
-            if (Ok)
-            {
-                return person.Id;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        public bool Delete(int id)
-        {
-            Person personForDelete = _persons.Single(p => p.Id == id);
-            if (_persons.Remove(personForDelete))
-            {
-                return UpdatePersonsFile();
-            }
-            else 
-            {
-                return false;
-            }
+            return UpdatePersonsFile() ? person.Id : 0;
         }
 
         public Person GetPersonById(int id)
@@ -156,5 +135,20 @@ namespace Timesheets.Data.Implementations
             }
             return UpdatePersonsFile();
         }
+
+        public bool Delete(int id)
+        {
+            Person personForDelete;
+            try
+            {
+                personForDelete = _persons.Single(p => p.Id == id);
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+            return _persons.Remove(personForDelete) && UpdatePersonsFile();
+        }
+
     }
 }
